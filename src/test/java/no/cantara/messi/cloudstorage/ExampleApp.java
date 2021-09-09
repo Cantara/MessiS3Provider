@@ -1,14 +1,15 @@
 package no.cantara.messi.cloudstorage;
 
+import com.google.protobuf.ByteString;
 import no.cantara.config.ApplicationProperties;
 import no.cantara.config.ProviderLoader;
 import no.cantara.messi.api.MessiClient;
 import no.cantara.messi.api.MessiClientFactory;
 import no.cantara.messi.api.MessiConsumer;
-import no.cantara.messi.api.MessiMessage;
 import no.cantara.messi.api.MessiProducer;
+import no.cantara.messi.api.MessiULIDUtils;
+import no.cantara.messi.protos.MessiMessage;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public class ExampleApp {
@@ -43,8 +44,8 @@ public class ExampleApp {
             for (; ; ) {
                 MessiMessage message = consumer.receive(30, TimeUnit.SECONDS);
                 if (message != null) {
-                    System.out.printf("Consumed message with id: %s%n", message.ulid());
-                    if (message.externalId().equals("582AACB30")) {
+                    System.out.printf("Consumed message with id: %s%n", MessiULIDUtils.toUlid(message.getUlid()));
+                    if (message.getExternalId().equals("582AACB30")) {
                         return;
                     }
                 }
@@ -56,15 +57,15 @@ public class ExampleApp {
 
     static void produceMessages(MessiClient client) {
         try (MessiProducer producer = client.producer("my-messi-stream")) {
-            producer.publish(MessiMessage.builder().externalId("4BA210EC2")
-                    .put("the-payload", "Hello 1".getBytes(StandardCharsets.UTF_8))
+            producer.publish(MessiMessage.newBuilder().setExternalId("4BA210EC2")
+                    .putData("the-payload", ByteString.copyFromUtf8("Hello 1"))
                     .build());
-            producer.publish(MessiMessage.builder().externalId("B827B4CCE")
-                    .put("the-payload", "Hello 2".getBytes(StandardCharsets.UTF_8))
-                    .put("metadata", ("created-time " + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8))
+            producer.publish(MessiMessage.newBuilder().setExternalId("B827B4CCE")
+                    .putData("the-payload", ByteString.copyFromUtf8("Hello 2"))
+                    .putData("metadata", ByteString.copyFromUtf8("created-time " + System.currentTimeMillis()))
                     .build());
-            producer.publish(MessiMessage.builder().externalId("582AACB30")
-                    .put("the-payload", "Hello 3".getBytes(StandardCharsets.UTF_8))
+            producer.publish(MessiMessage.newBuilder().setExternalId("582AACB30")
+                    .putData("the-payload", ByteString.copyFromUtf8("Hello 3"))
                     .build());
         }
     }

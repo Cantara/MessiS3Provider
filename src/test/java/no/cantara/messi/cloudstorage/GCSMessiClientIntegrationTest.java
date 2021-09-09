@@ -6,14 +6,15 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.google.protobuf.ByteString;
 import no.cantara.config.ApplicationProperties;
 import no.cantara.config.ProviderLoader;
 import no.cantara.messi.api.MessiClient;
 import no.cantara.messi.api.MessiClientFactory;
 import no.cantara.messi.api.MessiConsumer;
-import no.cantara.messi.api.MessiMessage;
 import no.cantara.messi.api.MessiMetadataClient;
 import no.cantara.messi.api.MessiProducer;
+import no.cantara.messi.protos.MessiMessage;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Ignore;
@@ -135,42 +136,42 @@ public class GCSMessiClientIntegrationTest {
         long timestampAfterD;
         try (MessiProducer producer = client.producer("the-topic")) {
             timestampBeforeA = System.currentTimeMillis();
-            producer.publish(MessiMessage.builder().externalId("a").put("payload1", new byte[1000]).put("payload2", new byte[500]).build());
+            producer.publish(MessiMessage.newBuilder().setExternalId("a").putData("payload1", ByteString.copyFrom(new byte[1000])).putData("payload2", ByteString.copyFrom(new byte[500])).build());
             Thread.sleep(5);
             timestampBeforeB = System.currentTimeMillis();
-            producer.publish(MessiMessage.builder().externalId("b").put("payload1", new byte[400]).put("payload2", new byte[700]).build());
+            producer.publish(MessiMessage.newBuilder().setExternalId("b").putData("payload1", ByteString.copyFrom(new byte[400])).putData("payload2", ByteString.copyFrom(new byte[700])).build());
             Thread.sleep(5);
             timestampBeforeC = System.currentTimeMillis();
-            producer.publish(MessiMessage.builder().externalId("c").put("payload1", new byte[700]).put("payload2", new byte[70]).build());
+            producer.publish(MessiMessage.newBuilder().setExternalId("c").putData("payload1", ByteString.copyFrom(new byte[700])).putData("payload2", ByteString.copyFrom(new byte[70])).build());
             Thread.sleep(5);
             timestampBeforeD = System.currentTimeMillis();
-            producer.publish(MessiMessage.builder().externalId("d").put("payload1", new byte[8050]).put("payload2", new byte[130]).build());
+            producer.publish(MessiMessage.newBuilder().setExternalId("d").putData("payload1", ByteString.copyFrom(new byte[8050])).putData("payload2", ByteString.copyFrom(new byte[130])).build());
             Thread.sleep(5);
             timestampAfterD = System.currentTimeMillis();
         }
 
         MessiMessage lastMessage = client.lastMessage("the-topic");
         assertNotNull(lastMessage);
-        assertEquals(lastMessage.externalId(), "d");
+        assertEquals(lastMessage.getExternalId(), "d");
 
         try (MessiConsumer consumer = client.consumer("the-topic")) {
-            assertEquals(consumer.receive(1, TimeUnit.SECONDS).externalId(), "a");
-            assertEquals(consumer.receive(1, TimeUnit.SECONDS).externalId(), "b");
-            assertEquals(consumer.receive(1, TimeUnit.SECONDS).externalId(), "c");
-            assertEquals(consumer.receive(1, TimeUnit.SECONDS).externalId(), "d");
+            assertEquals(consumer.receive(1, TimeUnit.SECONDS).getExternalId(), "a");
+            assertEquals(consumer.receive(1, TimeUnit.SECONDS).getExternalId(), "b");
+            assertEquals(consumer.receive(1, TimeUnit.SECONDS).getExternalId(), "c");
+            assertEquals(consumer.receive(1, TimeUnit.SECONDS).getExternalId(), "d");
         }
 
         try (MessiConsumer consumer = client.consumer("the-topic")) {
             consumer.seek(timestampAfterD);
             assertNull(consumer.receive(100, TimeUnit.MILLISECONDS));
             consumer.seek(timestampBeforeD);
-            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).externalId(), "d");
+            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).getExternalId(), "d");
             consumer.seek(timestampBeforeB);
-            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).externalId(), "b");
+            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).getExternalId(), "b");
             consumer.seek(timestampBeforeC);
-            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).externalId(), "c");
+            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).getExternalId(), "c");
             consumer.seek(timestampBeforeA);
-            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).externalId(), "a");
+            assertEquals(consumer.receive(100, TimeUnit.MILLISECONDS).getExternalId(), "a");
         }
 
         {
