@@ -41,6 +41,10 @@ public class GCSMessiClientFactory implements MessiClientFactory {
         return "gcs";
     }
 
+    public String providerTechnology() {
+        return alias();
+    }
+
     @Override
     public MessiClient create(ApplicationProperties configuration) {
         String bucket = configuration.get("gcs.bucket-name");
@@ -101,6 +105,6 @@ public class GCSMessiClientFactory implements MessiClientFactory {
         AvroMessiUtils readOnlyGcsMessiUtils = new GCSMessiUtils(getReadOnlyStorage(credentials), bucket);
         Storage writableStorage = getWritableStorage(credentials);
         AvroMessiUtils readWriteGcsMessiUtils = new GCSMessiUtils(writableStorage, bucket);
-        return new GCSMessiClient(localTempFolder, avroMaxSeconds, avroMaxBytes, avroSyncInterval, gcsFileListingMaxIntervalSeconds, readOnlyGcsMessiUtils, readWriteGcsMessiUtils, writableStorage, bucket);
+        return new GCSMessiClient(localTempFolder, avroMaxSeconds, avroMaxBytes, avroSyncInterval, gcsFileListingMaxIntervalSeconds, readOnlyGcsMessiUtils, readWriteGcsMessiUtils, providerTechnology(), writableStorage, bucket);
     }
 }
