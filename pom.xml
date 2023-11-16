@@ -4,7 +4,7 @@
 
     <groupId>no.cantara.messi</groupId>
     <artifactId>messi-s3-provider</artifactId>
-    <version>0.8.24</version>
+    <version>0.8.25-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Messi S3 Provider</name>
@@ -37,7 +37,7 @@
         <connection>scm:git:git://github.com/Cantara/MessiS3Provider.git</connection>
         <developerConnection>scm:git:git@github.com:Cantara/MessiS3Provider.git</developerConnection>
         <url>https://github.com/Cantara/MessiS3Provider/tree/master</url>
-        <tag>messi-s3-provider-0.8.24</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
