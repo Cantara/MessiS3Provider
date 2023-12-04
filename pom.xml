@@ -4,7 +4,7 @@
 
     <groupId>no.cantara.messi</groupId>
     <artifactId>messi-s3-provider</artifactId>
-    <version>0.8.26</version>
+    <version>0.8.28-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Messi S3 Provider</name>
