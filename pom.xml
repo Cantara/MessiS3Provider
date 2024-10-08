@@ -44,7 +44,7 @@
         <connection>scm:git:git://github.com/Cantara/MessiS3Provider.git</connection>
         <developerConnection>scm:git:git@github.com:Cantara/MessiS3Provider.git</developerConnection>
         <url>https://github.com/Cantara/MessiS3Provider/tree/main</url>
-        <tag>messi-s3-provider-0.8.26</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencyManagement>
