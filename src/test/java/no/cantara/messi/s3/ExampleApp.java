@@ -1,4 +1,4 @@
-package no.cantara.messi.cloudstorage;
+package no.cantara.messi.s3;
 
 import com.google.protobuf.ByteString;
 import no.cantara.config.ApplicationProperties;
@@ -21,15 +21,18 @@ public class ExampleApp {
                 .put("avro-file.max.seconds", "3600")
                 .put("avro-file.max.bytes", Long.toString(10 * 1024 * 1024)) // 10 MiB
                 .put("avro-file.sync.interval", Long.toString(200))
-                .put("gcs.bucket-name", "kcg-experimental-bucket")
-                .put("gcs.listing.min-interval-seconds", Long.toString(3))
-                .put("gcs.credential-provider", "service-account")
-                .put("gcs.service-account.key-file", "secret/gcs_test_sa.json")
+                .put("s3.bucket-name", "your-s3-bucket-name")
+                .put("s3.listing.min-interval-seconds", Long.toString(3))
+                .put("s3.region", "your-aws-region")
+                .put("s3.credential-provider", "default") // Use 'static' if you want to provide access key and secret
+                // If using static credentials, uncomment these lines and provide your AWS credentials
+                // .put("s3.access-key-id", "your-access-key-id")
+                // .put("s3.secret-access-key", "your-secret-access-key")
                 .end()
                 .build();
 
         final MessiClient client = ProviderLoader.configure(configuration,
-                "gcs", MessiClientFactory.class);
+                "s3", MessiClientFactory.class);
 
         Thread consumerThread = new Thread(() -> consumeMessages(client));
         consumerThread.start();

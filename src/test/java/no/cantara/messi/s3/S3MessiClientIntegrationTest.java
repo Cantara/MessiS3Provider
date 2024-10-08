@@ -1,11 +1,5 @@
-package no.cantara.messi.cloudstorage;
+package no.cantara.messi.s3;
 
-import com.google.api.gax.paging.Page;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
 import com.google.protobuf.ByteString;
 import no.cantara.config.ApplicationProperties;
 import no.cantara.config.ProviderLoader;
@@ -19,6 +13,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,27 +25,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 /**
- * Running these tests requires an accessible google-cloud-storage bucket with read and write object access.
+ * Running these tests requires an accessible AWS S3 bucket with read and write object access.
  * <p>
- * Requirements: A google cloud service-account key with access to read and write objects in cloud-storage.
- * This can be put as a file at the path "secret/gcs_sa_test.json"
+ * Requirements: AWS credentials with access to read and write objects in S3.
+ * These can be provided through environment variables, AWS credentials file, or EC2 instance profile.
  */
 @Ignore
-public class GCSMessiClientIntegrationTest {
+public class S3MessiClientIntegrationTest {
 
     MessiClient client;
+    S3Client s3Client;
 
     @BeforeMethod
     public void createClient() throws IOException {
@@ -56,20 +52,15 @@ public class GCSMessiClientIntegrationTest {
                 .put("avro-file.max.seconds", "3")
                 .put("avro-file.max.bytes", Long.toString(2 * 1024)) // 2 KiB
                 .put("avro-file.sync.interval", Long.toString(200))
-                .put("gcs.bucket-name", "kcg-experimental-bucket")
-                .put("gcs.listing.min-interval-seconds", Long.toString(3))
-                .put("gcs.credential-provider", "service-account")
-                .put("gcs.service-account.key-file", "secret/gcs_test_sa.json")
+                .put("s3.bucket-name", "your-test-bucket-name")
+                .put("s3.listing.min-interval-seconds", Long.toString(3))
+                .put("s3.region", "your-aws-region")
+                .put("s3.credential-provider", "default")
                 .end();
 
-        String messiGcsBucket = System.getenv("MESSI_GCS_BUCKET");
-        if (messiGcsBucket != null) {
-            applicationPropertiesBuilder.property("gcs.bucket-name", messiGcsBucket);
-        }
-
-        String messiGcsSaKeyFile = System.getenv("MESSI_GCS_SERVICE_ACCOUNT_KEY_FILE");
-        if (messiGcsSaKeyFile != null) {
-            applicationPropertiesBuilder.property("gcs.service-account.key-file", messiGcsSaKeyFile);
+        String messiS3Bucket = System.getenv("MESSI_S3_BUCKET");
+        if (messiS3Bucket != null) {
+            applicationPropertiesBuilder.property("s3.bucket-name", messiS3Bucket);
         }
 
         ApplicationProperties configuration = applicationPropertiesBuilder.build();
@@ -79,33 +70,44 @@ public class GCSMessiClientIntegrationTest {
             Files.walk(localTempFolder).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
         }
         Files.createDirectories(localTempFolder);
-        client = ProviderLoader.configure(configuration, "gcs", MessiClientFactory.class);
+        client = ProviderLoader.configure(configuration, "s3", MessiClientFactory.class);
+
+        // Get S3Client
+        s3Client = S3MessiClientFactory.getS3Client(configuration);
 
         // clear bucket
-        String bucket = configuration.get("gcs.bucket-name");
+        String bucket = configuration.get("s3.bucket-name");
+        clearBucket(bucket, "the-topic");
+    }
 
+    private void clearBucket(String bucket, String prefix) {
+        ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(prefix)
+                .build();
 
-        ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(Files.newInputStream(Paths.get(configuration.get("gcs.service-account.key-file")), StandardOpenOption.READ));
-        Storage storage = GCSMessiClientFactory.getWritableStorage(credentials);
-        Page<Blob> page = storage.list(bucket, Storage.BlobListOption.prefix("the-topic"));
-        BlobId[] blobs = StreamSupport.stream(page.iterateAll().spliterator(), false).map(BlobInfo::getBlobId).collect(Collectors.toList()).toArray(new BlobId[0]);
-        if (blobs.length > 0) {
-            List<Boolean> deletedList = storage.delete(blobs);
-            for (Boolean deleted : deletedList) {
-                if (!deleted) {
-                    throw new RuntimeException("Unable to delete blob in bucket");
-                }
-            }
+        ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+        for (S3Object object : listResponse.contents()) {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(object.key())
+                    .build();
+            s3Client.deleteObject(deleteRequest);
         }
     }
 
     @AfterMethod
     public void closeClient() {
         client.close();
+        s3Client.close();
     }
 
     @Test
-    public void thatMostFunctionsWorkWhenIntegratedWithGCS() throws Exception {
+    public void thatMostFunctionsWorkWhenIntegratedWithS3() throws Exception {
+        // The rest of the test method remains largely the same
+        // Only the setup and teardown parts needed significant changes
+
         assertNull(client.lastMessage("the-topic"));
 
         {
