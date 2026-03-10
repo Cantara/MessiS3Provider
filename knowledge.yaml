@@ -1,0 +1,25 @@
+id: messi-s3-provider
+name: Messi S3 Provider
+version: 0.2-SNAPSHOT
+description: |
+  AWS S3 backend implementation for the Messi event-streaming SDK. Stores event
+  streams as S3 objects, enabling cost-effective batch ingestion, archival, and
+  replay of large event volumes.
+units:
+  - id: s3-client
+    name: S3 Client
+    type: component
+    description: S3MessiClient — implements MessiClient backed by Amazon S3 object storage.
+    path: src/main/java/no/cantara/messi
+  - id: s3-writer
+    name: S3 Writer
+    type: component
+    description: Batched S3 object writer that accumulates messages before flushing to S3.
+  - id: s3-reader
+    name: S3 Reader
+    type: component
+    description: S3 object reader with seek support for efficient event replay from arbitrary positions.
+  - id: config
+    name: Configuration
+    type: component
+    description: S3 bucket name, key prefix, and AWS credentials configuration.
