@@ -1,3 +1,17 @@
+kcp_version: "0.21"
+updated: "2026-06-20"
+language: en
+license: "Apache-2.0"
+indexing: private
+temporal:
+  valid_from: "2026-03-10"
+signing:
+  scheme: ed25519
+  scope: this-manifest
+  public_key: "MCowBQYDK2VwAyEAuipgusnqU9vjf3p2yPVLD/DmERT6tBbLOqEETdxAhMU="
+  signature: "https://raw.githubusercontent.com/Cantara/MessiS3Provider/main/knowledge.yaml.sig"
+not_for: []
+
 id: messi-s3-provider
 name: Messi S3 Provider
 version: 0.2-SNAPSHOT
@@ -11,15 +25,27 @@ units:
     type: component
     description: S3MessiClient — implements MessiClient backed by Amazon S3 object storage.
     path: src/main/java/no/cantara/messi
+      content_hash:
+        algorithm: sha256
+        value: ""
   - id: s3-writer
     name: S3 Writer
     type: component
     description: Batched S3 object writer that accumulates messages before flushing to S3.
+      content_hash:
+        algorithm: sha256
+        value: ""
   - id: s3-reader
     name: S3 Reader
     type: component
     description: S3 object reader with seek support for efficient event replay from arbitrary positions.
+      content_hash:
+        algorithm: sha256
+        value: ""
   - id: config
     name: Configuration
     type: component
     description: S3 bucket name, key prefix, and AWS credentials configuration.
+      content_hash:
+        algorithm: sha256
+        value: ""
