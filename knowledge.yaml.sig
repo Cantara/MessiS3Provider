@@ -1,6 +1,1 @@
-{
-  "key_id": "cantara-repos-2026",
-  "algorithm": "EdDSA",
-  "public_key": "MCowBQYDK2VwAyEAuipgusnqU9vjf3p2yPVLD/DmERT6tBbLOqEETdxAhMU=",
-  "signature": "2lsC1Xk7h1sjN/OPdPPLCV/NHilewReKgP452CsrquOnVxpj/ty6TAik+DXBGswOMEhYRyYt1NixZy7EBIbKCA=="
-}
+7c3zaSlP3eQTVJ6e6EaEpGzZ/zVJELpWPjJr36obIGsaAQqQ7CpVMnjDwrE4cOYQmJy7boc+YxAeV8HMFZS8Ag==
